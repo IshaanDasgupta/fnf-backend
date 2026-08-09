@@ -13,9 +13,11 @@ export interface AuthenticatedRequest<
   ResBody = unknown,
   ReqBody = unknown,
   ReqQuery = ParsedQs,
-> extends Request<P, ResBody, ReqBody, ReqQuery> {
-  user?: AuthenticatedUser;
+  Locals extends Record<string, any> = Record<string, any>,
+> extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
+  user: AuthenticatedUser;
 }
+
 export interface AuthUser {
   id: string;
   name?: string;

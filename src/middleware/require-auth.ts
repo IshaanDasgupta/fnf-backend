@@ -1,12 +1,6 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 
-import { AuthenticatedRequest } from "@/types/auth";
-
-export function requireAuth(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction,
-) {
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
   if (!req.user) {
     return res.status(401).json({
       success: false,

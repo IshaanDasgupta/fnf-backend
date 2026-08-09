@@ -1,5 +1,5 @@
-import { ZodType, ZodError } from "zod";
-import { Request, Response, NextFunction } from "express";
+import { ZodError, ZodType } from "zod";
+import { NextFunction, Request, Response } from "express";
 
 type ValidationSchema = {
   body?: ZodType;
@@ -10,13 +10,17 @@ type ValidationSchema = {
 export function validate(schema: ValidationSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (schema.body) req.body = schema.body.parse(req.body);
+      if (schema.body) {
+        schema.body.parse(req.body);
+      }
 
-      if (schema.query)
-        req.query = schema.query.parse(req.query) as Request["query"];
+      if (schema.query) {
+        schema.query.parse(req.query);
+      }
 
-      if (schema.params)
-        req.params = schema.params.parse(req.params) as Request["params"];
+      if (schema.params) {
+        schema.params.parse(req.params);
+      }
 
       next();
     } catch (error) {

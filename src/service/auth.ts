@@ -1,7 +1,7 @@
 import {
   generateAccessToken,
   generateRefreshToken,
-  getAccessTokenExpiry,
+  getRefereshTokenExpiry,
   verifyRefreshToken,
 } from "@/service/jwt";
 import * as TwilioService from "@/service/twilio";
@@ -32,7 +32,7 @@ export async function verifyOTP(phone: string, otp: string) {
     user,
     accessToken: generateAccessToken(user.id),
     refreshToken: generateRefreshToken(user.id),
-    expiresAt: getAccessTokenExpiry(),
+    refreshExpiresAt: getRefereshTokenExpiry(),
   };
 }
 
@@ -49,11 +49,8 @@ export async function refresh(refreshToken: string) {
 
   return {
     user,
-
     accessToken: generateAccessToken(user.id),
-
     refreshToken: generateRefreshToken(user.id),
-
-    expiresAt: getAccessTokenExpiry(),
+    refreshExpiresAt: getRefereshTokenExpiry(),
   };
 }

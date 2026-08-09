@@ -1,0 +1,56 @@
+import { CITIES } from "@/config/constants";
+import { QUICK_FILTER_IDS } from "@/config/quick-filters";
+import { z } from "zod";
+
+const QuickFilterIdSchema = z.enum(QUICK_FILTER_IDS);
+
+export const GetListingsSchema = z.object({
+  city: z.enum(CITIES),
+  latitude: z.coerce.number().min(-90).max(90),
+  longitude: z.coerce.number().min(-180).max(180),
+
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+
+  quickFilters: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return [];
+      }
+
+      return value.split(",");
+    })
+    .pipe(z.array(QuickFilterIdSchema)),
+});
+
+export const FavouriteListingSchema = z.object({
+  listing_id: z.string(),
+  value: z.boolean(),
+});
+
+export const GetMapListingsSchema = z.object({
+  north: z.coerce.number().min(-90).max(90),
+  south: z.coerce.number().min(-90).max(90),
+  east: z.coerce.number().min(-180).max(180),
+  west: z.coerce.number().min(-180).max(180),
+
+  limit: z.coerce.number().int().min(1).max(500).default(200),
+
+  quickFilters: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return [];
+      }
+
+      return value.split(",");
+    })
+    .pipe(z.array(QuickFilterIdSchema)),
+});
+
+export type GetListingsQuery = z.infer<typeof GetListingsSchema>;
+export type GetMapListingsQuery = z.infer<typeof GetMapListingsSchema>;
+export type FavouriteListingBody = z.infer<typeof FavouriteListingSchema>;

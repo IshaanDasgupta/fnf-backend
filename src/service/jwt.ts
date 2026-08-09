@@ -28,6 +28,6 @@ export function verifyRefreshToken(token: string) {
   };
 }
 
-export function getAccessTokenExpiry() {
-  return Date.now() + ACCESS_TOKEN_EXPIRY * 1000;
+export function getRefereshTokenExpiry() {
+  return Date.now() + REFRESH_TOKEN_EXPIRY * 1000;
 }

@@ -1,10 +1,9 @@
-import { NextFunction, Response } from "express";
+import { NextFunction, Response, Request } from "express";
 
 import logger from "@/utils/logger";
-import { AuthenticatedRequest } from "@/types/auth";
 
 export function requestLoggerMiddleware(
-  req: AuthenticatedRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) {
