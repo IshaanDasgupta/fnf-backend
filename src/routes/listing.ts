@@ -29,7 +29,7 @@ router.get(
   ListingController.getMapListings,
 );
 
-router.post(
+router.put(
   "/fav",
   requireAuth,
   validate({

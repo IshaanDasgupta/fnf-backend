@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import authRoutes from "@/routes/auth";
+import userRoutes from "@/routes/user";
 import listingRoutes from "@/routes/listing";
 
 import { jwtMiddleware } from "@/middleware/jwt";
@@ -19,6 +20,7 @@ app.use(jwtMiddleware);
 app.use(requestLoggerMiddleware);
 
 app.use("/auth", authRoutes);
+app.use("/user", userRoutes);
 app.use("/listing", listingRoutes);
 
 app.use(errorMiddleware);

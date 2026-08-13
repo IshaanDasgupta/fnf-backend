@@ -1,5 +1,8 @@
 export const ACCESS_TOKEN_EXPIRY = 60 * 15;
 export const REFRESH_TOKEN_EXPIRY = 60 * 60 * 24 * 30;
+export const LISTING_SEARCH_RADIUS_METERS = 200_000;
+export const DEFAULT_LISTING_IMAGE =
+  "https://your-domain.com/images/default-listing.jpg";
 
 export const LISTING_STATUSES = [
   "active",
@@ -8,7 +11,7 @@ export const LISTING_STATUSES = [
   "expired",
 ] as const;
 
-export const CITIES = ["mumbai", "pune", "banglore", "hyderabad"] as const;
+export const CITIES = ["mumbai", "pune", "bangalore", "hyderabad"] as const;
 
 export const GENDER_PREFERENCES = ["male", "female"] as const;
 

@@ -28,7 +28,7 @@ export function jwtMiddleware(
 
     req.user = decoded as AuthenticatedUser;
 
-    logger.debug(`JWT verified user: ${req.user.userId}`);
+    logger.debug(`JWT verified user: ${req.user.id}`);
   } catch {
     logger.warn("Invalid JWT");
 

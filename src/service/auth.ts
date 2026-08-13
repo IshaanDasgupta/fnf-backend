@@ -1,7 +1,8 @@
+import { UserModel } from "@/models/user.model";
 import {
   generateAccessToken,
   generateRefreshToken,
-  getRefereshTokenExpiry,
+  getRefreshTokenExpiry,
   verifyRefreshToken,
 } from "@/service/jwt";
 import * as TwilioService from "@/service/twilio";
@@ -17,40 +18,61 @@ export async function verifyOTP(phone: string, otp: string) {
     throw new Error("Invalid OTP");
   }
 
-  // TODO:
-  // Fetch or create user from database
+  let user = await UserModel.findOne({
+    phone_number: phone,
+  });
 
-  const user = {
-    id: phone,
-    phone,
-    name: "ishaan",
-    email: "dasgupta.ishan@gmail.com",
-    basicOnboardingCompleted: true,
+  if (!user) {
+    user = await UserModel.create({
+      phone_number: phone,
+    });
+  }
+
+  const basicOnboardingCompleted = !!user.name && !!user.age && !!user.gender;
+
+  const userAuthData = {
+    id: user._id.toString(),
+    phone: user.phone_number,
+    name: user.name,
+    age: user.age,
+    gender: user.gender,
+    basicOnboardingCompleted,
   };
 
   return {
-    user,
-    accessToken: generateAccessToken(user.id),
-    refreshToken: generateRefreshToken(user.id),
-    refreshExpiresAt: getRefereshTokenExpiry(),
+    user: userAuthData,
+    accessToken: generateAccessToken(userAuthData.id),
+    refreshToken: generateRefreshToken(userAuthData.id),
+    refreshExpiresAt: getRefreshTokenExpiry(),
   };
 }
 
 export async function refresh(refreshToken: string) {
-  const payload = verifyRefreshToken(refreshToken);
+  const { id: userId } = verifyRefreshToken(refreshToken);
 
-  const user = {
-    id: payload.userId,
-    phone: "9665572638",
-    name: "ishaan",
-    email: "dasgupta.ishan@gmail.com",
-    basicOnboardingCompleted: true,
+  let user = await UserModel.findOne({
+    _id: userId,
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const basicOnboardingCompleted = !!user.name && !!user.age && !!user.gender;
+
+  const userAuthData = {
+    id: user._id.toString(),
+    phone: user.phone_number,
+    name: user.name,
+    age: user.age,
+    gender: user.gender,
+    basicOnboardingCompleted,
   };
 
   return {
-    user,
-    accessToken: generateAccessToken(user.id),
-    refreshToken: generateRefreshToken(user.id),
-    refreshExpiresAt: getRefereshTokenExpiry(),
+    user: userAuthData,
+    accessToken: generateAccessToken(userAuthData.id),
+    refreshToken: generateRefreshToken(userAuthData.id),
+    refreshExpiresAt: getRefreshTokenExpiry(),
   };
 }

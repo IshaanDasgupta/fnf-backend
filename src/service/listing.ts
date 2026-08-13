@@ -1,182 +1,322 @@
-import { QUICK_FILTERS } from "@/config/quick-filters";
-import { DUMMY_LISTINGS } from "@/data/dummy_listings";
-import { Listing } from "@/types/listing";
 import {
+  DEFAULT_LISTING_IMAGE,
+  LISTING_SEARCH_RADIUS_METERS,
+} from "@/config/constants";
+import { QUICK_FILTERS } from "@/config/quick-filters";
+import { Listing, ListingModel } from "@/models/listing.model";
+import { UserModel } from "@/models/user.model";
+
+import {
+  FavouriteListingBody,
   GetListingsQuery,
   GetMapListingsQuery,
-  GetMapListingsSchema,
+  ListingCursor,
+  ListingCursorSchema,
 } from "@/types/request/listing";
 import {
   GetListingsResponse,
   GetMapListingsResponse,
   ListingCardResponse,
   MapListingsResponse,
+  ToggleFavouriteListingResponse,
 } from "@/types/response/listing";
+import logger from "@/utils/logger";
+import mongoose, { Types } from "mongoose";
 
-export async function getListings({
-  cursor,
-  limit,
-  quickFilters,
-}: GetListingsQuery): Promise<GetListingsResponse> {
+export function encodeListingCursor(cursor: ListingCursor): string {
+  const json = JSON.stringify(cursor);
+
+  return Buffer.from(json, "utf8").toString("base64url");
+}
+
+export function decodeListingCursor(cursor: string): ListingCursor {
+  let decoded: string;
+
+  try {
+    decoded = Buffer.from(cursor, "base64url").toString("utf8");
+  } catch {
+    throw new Error("Invalid cursor encoding");
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(decoded);
+  } catch {
+    throw new Error("Invalid cursor format");
+  }
+
+  return ListingCursorSchema.parse(parsed);
+}
+
+export async function getListings(
+  userId: string,
+  input: GetListingsQuery,
+): Promise<GetListingsResponse> {
+  const { city, latitude, longitude, cursor, limit, quickFilters } = input;
+
+  const user = await UserModel.findById(userId)
+    .select("favorite_listings")
+    .lean();
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const favoriteSet = new Set(
+    user.favorite_listings.map((id) => id.toString()),
+  );
+
+  const query: Record<string, unknown> = {
+    "data.city": city,
+    "data.status": "active",
+  };
+
   const selectedFilters = QUICK_FILTERS.filter((filter) =>
     quickFilters.includes(filter.id),
   );
 
-  const filteredListings = DUMMY_LISTINGS.filter((listing) =>
-    selectedFilters.every((filter) => filter.filter(listing)),
-  );
-
-  let startIndex = 0;
-
-  if (cursor) {
-    const index = filteredListings.findIndex(
-      (listing) => listing._id === cursor,
-    );
-
-    if (index >= 0) {
-      startIndex = index + 1;
+  for (const filter of selectedFilters) {
+    if (filter.query) {
+      Object.assign(query, filter.query);
     }
   }
 
-  const page = filteredListings.slice(startIndex, startIndex + limit);
+  const decodedCursor = cursor ? decodeListingCursor(cursor) : undefined;
+
+  const listings = await ListingModel.aggregate([
+    {
+      $geoNear: {
+        near: {
+          type: "Point",
+          coordinates: [longitude, latitude],
+        },
+        key: "data.location",
+        distanceField: "distance",
+        maxDistance: LISTING_SEARCH_RADIUS_METERS,
+        spherical: true,
+        query,
+      },
+    },
+
+    // $geoNear already sorts by distance ASC.
+    // _id is the deterministic tie-breaker.
+    {
+      $sort: {
+        distance: 1,
+        _id: 1,
+      },
+    },
+
+    // Continue after the cursor.
+    ...(decodedCursor
+      ? [
+          {
+            $match: {
+              $or: [
+                {
+                  distance: {
+                    $gt: decodedCursor.distance,
+                  },
+                },
+                {
+                  distance: decodedCursor.distance,
+                  _id: {
+                    $gt: new Types.ObjectId(decodedCursor.id),
+                  },
+                },
+              ],
+            },
+          },
+        ]
+      : []),
+
+    {
+      $limit: limit + 1,
+    },
+  ]);
+
+  const hasNext = listings.length > limit;
+
+  const page = hasNext ? listings.slice(0, limit) : listings;
 
   const data: ListingCardResponse[] = page.map((listing) => ({
-    id: listing._id,
-
-    title: listing.listing.title,
-
-    coverImage: listing.listing.cover_image ?? listing.listing.images?.[0],
-
+    id: listing._id.toString(),
+    title: listing.data.title,
+    coverImage: listing.data.cover_image || DEFAULT_LISTING_IMAGE,
     address: {
-      locality: listing.listing.locality,
-      city: listing.listing.city,
+      locality: listing.data.locality,
+      city: listing.data.city,
     },
-
     location: {
-      latitude: listing.listing.location.latitude,
-      longitude: listing.listing.location.longitude,
+      latitude: listing.data.location.coordinates[1],
+      longitude: listing.data.location.coordinates[0],
     },
-
-    rent: listing.listing.rent,
-
-    bhk: listing.listing.bhk ?? "N/A",
-
-    occupancy: listing.listing.occupency,
-
-    availableFrom: listing.listing.available_from
-      ? new Date(listing.listing.available_from).toISOString()
+    rent: listing.data.rent,
+    bhk: listing.data.bhk,
+    occupancy: listing.data.occupancy,
+    availableFrom: listing.data.available_from
+      ? new Date(listing.data.available_from).toISOString()
       : undefined,
-
-    availableImmediately: listing.listing.available_immediately,
-
+    availableImmediately: listing.data.available_immediately,
     tags: [
-      listing.listing.furnised_status,
-      `${listing.listing.floor}F`,
-      ...(listing.listing.pets_present ? ["Pets"] : []),
-      ...(listing.listing.wifi ? ["WiFi"] : []),
-      ...(listing.listing.parking?.car ? ["Car Parking"] : []),
-    ].slice(0, 4),
-
-    favorite: Math.random() > 0.7,
+      listing.data.furnished_status,
+      listing.data.floor !== undefined ? `${listing.data.floor}F` : undefined,
+      ...(listing.data.pets_present ? ["Pets"] : []),
+      ...(listing.data.wifi ? ["WiFi"] : []),
+    ]
+      .filter((tag): tag is string => tag !== undefined)
+      .slice(0, 4),
+    favorite: favoriteSet.has(listing._id.toString()),
   }));
 
+  const lastListing = page.at(-1);
+
+  const nextCursor =
+    hasNext && lastListing
+      ? encodeListingCursor({
+          distance: lastListing.distance,
+          id: lastListing._id.toString(),
+        })
+      : null;
+
   return {
+    success: true,
     data,
-
     pagination: {
-      nextCursor: data.length === limit ? data[data.length - 1].id : null,
-
-      hasNext: startIndex + limit < filteredListings.length,
+      nextCursor,
+      hasNext,
     },
   };
 }
 
-export async function getMapListings({
-  north,
-  south,
-  east,
-  west,
-  limit,
-  quickFilters,
-}: GetMapListingsQuery): Promise<GetMapListingsResponse> {
+export async function getMapListings(
+  userId: string,
+  input: GetMapListingsQuery,
+): Promise<GetMapListingsResponse> {
+  const { north, south, east, west, limit, quickFilters } = input;
+
+  const user = await UserModel.findById(userId)
+    .select("favorite_listings")
+    .lean();
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const favoriteSet = new Set(
+    user.favorite_listings.map((id) => id.toString()),
+  );
+
+  const query: Record<string, unknown> = {
+    "data.status": "active",
+    "data.location": {
+      $geoWithin: {
+        $box: [
+          [west, south],
+          [east, north],
+        ],
+      },
+    },
+  };
+
   const selectedFilters = QUICK_FILTERS.filter((filter) =>
     quickFilters.includes(filter.id),
   );
 
-  const viewportListings = DUMMY_LISTINGS.filter((listing) =>
-    isInsideViewport(listing, {
-      north,
-      south,
-      east,
-      west,
-    }),
-  );
+  for (const filter of selectedFilters) {
+    if (filter.query) {
+      Object.assign(query, filter.query);
+    }
+  }
 
-  const filteredListings = viewportListings.filter((listing) =>
-    selectedFilters.every((filter) => filter.filter(listing)),
-  );
+  const listings = await ListingModel.find(query)
+    .sort({ views: -1, _id: 1 })
+    .limit(limit)
+    .lean();
 
-  const page = filteredListings.slice(0, limit);
-
-  const data: MapListingsResponse[] = page.map((listing) => ({
-    id: listing._id,
-
+  const data: MapListingsResponse[] = listings.map((listing) => ({
+    id: listing._id.toString(),
     location: {
-      latitude: listing.listing.location.latitude,
-      longitude: listing.listing.location.longitude,
+      latitude: listing.data.location.coordinates[1],
+      longitude: listing.data.location.coordinates[0],
     },
-
-    rent: listing.listing.rent,
-
-    title: listing.listing.title,
-
-    coverImage: listing.listing.cover_image ?? listing.listing.images?.[0],
-
+    rent: listing.data.rent,
+    title: listing.data.title,
+    coverImage: listing.data.cover_image || DEFAULT_LISTING_IMAGE,
     address: {
-      locality: listing.listing.locality,
-      city: listing.listing.city,
+      locality: listing.data.locality,
+      city: listing.data.city,
     },
-
-    bhk: listing.listing.bhk ?? "N/A",
-
-    occupancy: listing.listing.occupency,
-
-    favorite: Math.random() > 0.7,
+    bhk: listing.data.bhk,
+    occupancy: listing.data.occupancy,
+    favorite: favoriteSet.has(listing._id.toString()),
   }));
 
   return {
-    data,
-    hasMore: filteredListings.length > limit,
-  };
-}
-
-function isInsideViewport(
-  listing: Listing,
-  bounds: {
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  },
-): boolean {
-  const { latitude, longitude } = listing.listing.location;
-
-  return (
-    latitude >= bounds.south &&
-    latitude <= bounds.north &&
-    longitude >= bounds.west &&
-    longitude <= bounds.east
-  );
-}
-
-export const favouriteListing = async (
-  userId: string,
-  listingId: string,
-  value: boolean,
-) => {
-  //TODO: Implementation
-  return {
     success: true,
-    message: `Set favourite to ${value} for ${listingId} for user ${userId}`,
+    data,
   };
+}
+
+export const toggleFavouriteListing = async (
+  userId: string,
+  input: FavouriteListingBody,
+): Promise<ToggleFavouriteListingResponse> => {
+  const { listingId, value } = input;
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const listing = await ListingModel.findById(listingId).session(session);
+    if (!listing) throw new Error("Listing not found");
+
+    const user = await UserModel.findById(userId).session(session);
+    if (!user) throw new Error("User not found");
+
+    const result = await UserModel.updateOne(
+      {
+        _id: userId,
+        favorite_listings: value ? { $ne: listingId } : listingId,
+      },
+      value
+        ? {
+            $addToSet: {
+              favorite_listings: listingId,
+            },
+          }
+        : {
+            $pull: {
+              favorite_listings: listingId,
+            },
+          },
+      { session },
+    );
+
+    if (result.modifiedCount === 1) {
+      await ListingModel.updateOne(
+        { _id: listingId },
+        {
+          $inc: {
+            favorites: value ? 1 : -1,
+          },
+        },
+        { session },
+      );
+    }
+
+    await session.commitTransaction();
+    return {
+      success: true,
+      data: {
+        favorite: value,
+      },
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
 };

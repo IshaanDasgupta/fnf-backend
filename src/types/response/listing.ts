@@ -1,11 +1,14 @@
+import { BhkType, City, OccupancyType } from "@/config/constants";
+
 export interface ListingCardResponse {
   id: string;
+
   title: string;
-  coverImage?: string;
+  coverImage: string;
 
   address: {
     locality: string;
-    city: string;
+    city: City;
   };
 
   location: {
@@ -15,8 +18,8 @@ export interface ListingCardResponse {
 
   rent: number;
 
-  bhk: string;
-  occupancy?: string;
+  bhk: BhkType;
+  occupancy: OccupancyType;
 
   availableFrom?: string;
   availableImmediately: boolean;
@@ -27,8 +30,8 @@ export interface ListingCardResponse {
 }
 
 export interface GetListingsResponse {
+  success: boolean;
   data: ListingCardResponse[];
-
   pagination: {
     nextCursor: string | null;
     hasNext: boolean;
@@ -46,20 +49,27 @@ export interface MapListingsResponse {
   rent: number;
 
   title: string;
-  coverImage?: string;
+  coverImage: string;
 
   address: {
     locality: string;
-    city: string;
+    city: City;
   };
 
-  bhk: string;
-  occupancy?: string;
+  bhk: BhkType;
+  occupancy: OccupancyType;
 
   favorite: boolean;
 }
 
 export interface GetMapListingsResponse {
+  success: boolean;
   data: MapListingsResponse[];
-  hasMore: boolean;
+}
+
+export interface ToggleFavouriteListingResponse {
+  success: boolean;
+  data: {
+    favorite: boolean;
+  };
 }

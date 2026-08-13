@@ -1,8 +1,16 @@
 import { CITIES } from "@/config/constants";
 import { QUICK_FILTER_IDS } from "@/config/quick-filters";
+import { Types } from "mongoose";
 import { z } from "zod";
 
 const QuickFilterIdSchema = z.enum(QUICK_FILTER_IDS);
+
+export const ListingCursorSchema = z.object({
+  distance: z.number().finite().nonnegative(),
+  id: z.string().refine(Types.ObjectId.isValid, {
+    message: "Invalid listing ID",
+  }),
+});
 
 export const GetListingsSchema = z.object({
   city: z.enum(CITIES),
@@ -26,7 +34,7 @@ export const GetListingsSchema = z.object({
 });
 
 export const FavouriteListingSchema = z.object({
-  listing_id: z.string(),
+  listingId: z.string(),
   value: z.boolean(),
 });
 
@@ -51,6 +59,7 @@ export const GetMapListingsSchema = z.object({
     .pipe(z.array(QuickFilterIdSchema)),
 });
 
+export type ListingCursor = z.infer<typeof ListingCursorSchema>;
 export type GetListingsQuery = z.infer<typeof GetListingsSchema>;
 export type GetMapListingsQuery = z.infer<typeof GetMapListingsSchema>;
 export type FavouriteListingBody = z.infer<typeof FavouriteListingSchema>;

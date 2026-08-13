@@ -9,9 +9,7 @@ export async function sendOTP(
 ) {
   try {
     const { phone } = req.body;
-
     await AuthService.sendOTP(phone);
-
     return res.json({
       success: true,
       message: "OTP sent successfully",
@@ -28,9 +26,7 @@ export async function verifyOTP(
 ) {
   try {
     const { phone, otp } = req.body;
-
     const result = await AuthService.verifyOTP(phone, otp);
-
     return res.json(result);
   } catch (error) {
     next(error);
@@ -44,7 +40,6 @@ export async function refresh(
 ) {
   try {
     const result = await AuthService.refresh(req.body.refreshToken);
-
     res.json(result);
   } catch (err) {
     next(err);

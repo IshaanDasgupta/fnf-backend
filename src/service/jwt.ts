@@ -3,7 +3,7 @@ import { env } from "@/config/env";
 import jwt from "jsonwebtoken";
 
 export function generateAccessToken(userId: string) {
-  return jwt.sign({ userId }, env.jwtSecret, {
+  return jwt.sign({ id: userId }, env.jwtSecret, {
     expiresIn: ACCESS_TOKEN_EXPIRY,
   });
 }
@@ -11,7 +11,7 @@ export function generateAccessToken(userId: string) {
 export function generateRefreshToken(userId: string) {
   return jwt.sign(
     {
-      userId,
+      id: userId,
       type: "refresh",
     },
     env.jwtSecret,
@@ -22,12 +22,18 @@ export function generateRefreshToken(userId: string) {
 }
 
 export function verifyRefreshToken(token: string) {
-  return jwt.verify(token, env.jwtSecret) as {
-    userId: string;
+  const payload = jwt.verify(token, env.jwtSecret) as {
+    id: string;
     type: string;
   };
+
+  if (payload.type !== "refresh") {
+    throw new Error("Invalid refresh token");
+  }
+
+  return payload;
 }
 
-export function getRefereshTokenExpiry() {
+export function getRefreshTokenExpiry() {
   return Date.now() + REFRESH_TOKEN_EXPIRY * 1000;
 }
