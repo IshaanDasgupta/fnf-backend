@@ -2,7 +2,7 @@ export const ACCESS_TOKEN_EXPIRY = 60 * 15;
 export const REFRESH_TOKEN_EXPIRY = 60 * 60 * 24 * 30;
 export const LISTING_SEARCH_RADIUS_METERS = 200_000;
 export const DEFAULT_LISTING_IMAGE =
-  "https://your-domain.com/images/default-listing.jpg";
+  "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2";
 
 export const LISTING_STATUSES = [
   "active",
@@ -25,19 +25,109 @@ export const FURNISHED_STATUSES = [
   "fully-furnished",
 ] as const;
 
-export const SERVICE_OPTIONS = ["included", "split"] as const;
+export const ADD_ON_TYPES = [
+  // Appliances
+  "Air Conditioning",
+  "Refrigerator",
+  "Washing Machine",
+  "Microwave",
+  "Oven",
+  "Dishwasher",
+  "TV",
 
-export const AMENITY_TYPES = [
-  "Kitchen",
-  "AC",
+  // Kitchen
+  "Modular Kitchen",
+  "Gas Stove",
+  "Chimney",
+  "Water Purifier",
+
+  // Connectivity
+  "WiFi",
+  "Fiber Internet",
+
+  // Room / Home Features
+  "Attached Bathroom",
+  "Balcony",
+  "Private Terrace",
+  "Walk-in Closet",
+  "Furniture",
+
+  // Services
+  "Cook",
   "Maid",
-  "Washroom",
-  "Water",
-  "Parking",
-  "Utility",
+  "Housekeeping",
+  "Laundry",
+
+  "Others",
 ] as const;
 
-export const HOUSE_RULE_TYPES = ["Smoking", "Food", "Pets"] as const;
+export const AMENITY_TYPES = [
+  // Building / Society
+  "Clubhouse",
+  "Swimming Pool",
+  "Gym",
+  "Garden",
+  "Sports Facilities",
+  "Indoor Games",
+  "Jogging Track",
+
+  // Security
+  "24x7 Security",
+  "CCTV",
+  "Security Guard",
+  "Gated Community",
+  "Intercom",
+
+  // Building Facilities
+  "Lift",
+  "Power Backup",
+  "Water Supply",
+  "Gas Pipeline",
+
+  // Parking
+  "Car Parking",
+  "Bike Parking",
+  "Visitor Parking",
+  "Covered Parking",
+  "EV Charging",
+
+  // Other Society Facilities
+  "Pet Area",
+
+  "Others",
+] as const;
+
+export const HOUSE_RULE_TYPES = [
+  // Smoking / Alcohol
+  "No Smoking",
+  "No Alcohol",
+
+  // Food
+  "Vegetarian Only",
+  "Non-Vegetarian Allowed",
+  "No Cooking",
+
+  // Guests
+  "Guests Allowed",
+  "No Overnight Guests",
+  "No Parties",
+
+  // Pets
+  "No Pets",
+  "Pets Allowed",
+
+  // Living
+  "No Loud Music",
+  "No Loud Noise",
+  "No Subletting",
+
+  // Other
+  "Couples Only",
+  "Students Only",
+  "Working Professionals Only",
+
+  "Others",
+] as const;
 
 export const NEIGHBORHOOD_TYPES = ["Railway Station", "Metro"] as const;
 
@@ -49,7 +139,7 @@ export type GenderPreference = (typeof GENDER_PREFERENCES)[number];
 export type BhkType = (typeof BHK_TYPES)[number];
 export type OccupancyType = (typeof OCCUPANCY_TYPES)[number];
 export type FurnishedStatus = (typeof FURNISHED_STATUSES)[number];
-export type ServiceOption = (typeof SERVICE_OPTIONS)[number];
+export type AddOnType = (typeof ADD_ON_TYPES)[number];
 export type AmenityType = (typeof AMENITY_TYPES)[number];
 export type HouseRuleType = (typeof HOUSE_RULE_TYPES)[number];
 export type NeighborhoodType = (typeof NEIGHBORHOOD_TYPES)[number];

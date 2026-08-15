@@ -5,6 +5,7 @@ import { validate } from "@/middleware/validate";
 import { requireAuth } from "@/middleware/require-auth";
 import {
   FavouriteListingSchema,
+  GetListingSchema,
   GetListingsSchema,
   GetMapListingsSchema,
 } from "@/types/request/listing";
@@ -36,6 +37,15 @@ router.put(
     body: FavouriteListingSchema,
   }),
   ListingController.favouriteListing,
+);
+
+router.get(
+  "/:listingId",
+  requireAuth,
+  validate({
+    params: GetListingSchema,
+  }),
+  ListingController.getListing,
 );
 
 export default router;

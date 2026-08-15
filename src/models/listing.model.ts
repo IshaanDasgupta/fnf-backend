@@ -1,6 +1,7 @@
 import { InferSchemaType, Schema, model } from "mongoose";
 
 import {
+  ADD_ON_TYPES,
   AMENITY_TYPES,
   BHK_TYPES,
   CITIES,
@@ -11,7 +12,6 @@ import {
   LISTING_STATUSES,
   NEIGHBORHOOD_TYPES,
   OCCUPANCY_TYPES,
-  SERVICE_OPTIONS,
 } from "@/config/constants";
 
 type Location = {
@@ -42,16 +42,16 @@ const locationSchema = new Schema<Location>(
   },
 );
 
-const parkingSchema = new Schema(
+const addOnSchema = new Schema(
   {
-    bike: {
-      type: Boolean,
-      default: false,
+    type: {
+      type: String,
+      required: true,
+      enum: ADD_ON_TYPES,
     },
 
-    car: {
-      type: Boolean,
-      default: false,
+    desc: {
+      type: String,
     },
   },
   {
@@ -69,7 +69,6 @@ const amenitySchema = new Schema(
 
     desc: {
       type: String,
-      required: true,
     },
   },
   {
@@ -87,7 +86,6 @@ const houseRuleSchema = new Schema(
 
     desc: {
       type: String,
-      required: true,
     },
   },
   {
@@ -196,38 +194,14 @@ const listingDataSchema = new Schema(
       enum: FURNISHED_STATUSES,
     },
 
-    attached_bathroom: {
-      type: Boolean,
-      default: false,
-    },
-
-    balcony: {
-      type: Boolean,
-      default: false,
-    },
-
     floor: {
       type: Number,
       min: 0,
     },
 
-    wifi: {
-      type: String,
-      enum: SERVICE_OPTIONS,
-    },
-
-    cook: {
-      type: String,
-      enum: SERVICE_OPTIONS,
-    },
-
-    maid: {
-      type: String,
-      enum: SERVICE_OPTIONS,
-    },
-
-    parking: {
-      type: parkingSchema,
+    add_ons: {
+      type: [addOnSchema],
+      default: [],
     },
 
     amenities: {
@@ -240,8 +214,9 @@ const listingDataSchema = new Schema(
       default: [],
     },
 
-    pets_present: {
-      type: Boolean,
+    neighborhood: {
+      type: [neighborhoodSchema],
+      default: [],
     },
 
     rent: {
@@ -273,11 +248,6 @@ const listingDataSchema = new Schema(
       type: Boolean,
       required: true,
       default: false,
-    },
-
-    neighborhood: {
-      type: [neighborhoodSchema],
-      default: [],
     },
   },
   {

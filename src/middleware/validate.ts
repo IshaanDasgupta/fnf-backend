@@ -25,6 +25,13 @@ export function validate(schema: ValidationSchema) {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error("Validation failed");
+        console.error("Path:", req.path);
+        console.error("Query:", req.query);
+        console.error("Params:", req.params);
+        console.error("Body:", req.body);
+        console.error("Zod errors:", error.flatten().fieldErrors);
+
         return res.status(400).json({
           success: false,
           message: "Validation failed",

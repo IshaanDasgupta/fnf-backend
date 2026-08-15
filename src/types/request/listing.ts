@@ -59,7 +59,14 @@ export const GetMapListingsSchema = z.object({
     .pipe(z.array(QuickFilterIdSchema)),
 });
 
+export const GetListingSchema = z.object({
+  listingId: z.string().refine(Types.ObjectId.isValid, {
+    message: "Invalid listing ID",
+  }),
+});
+
 export type ListingCursor = z.infer<typeof ListingCursorSchema>;
 export type GetListingsQuery = z.infer<typeof GetListingsSchema>;
 export type GetMapListingsQuery = z.infer<typeof GetMapListingsSchema>;
 export type FavouriteListingBody = z.infer<typeof FavouriteListingSchema>;
+export type GetListingParams = z.infer<typeof GetListingSchema>;

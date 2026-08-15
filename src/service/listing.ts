@@ -14,9 +14,11 @@ import {
   ListingCursorSchema,
 } from "@/types/request/listing";
 import {
+  GetListingResponse,
   GetListingsResponse,
   GetMapListingsResponse,
   ListingCardResponse,
+  ListingResponse,
   MapListingsResponse,
   ToggleFavouriteListingResponse,
 } from "@/types/response/listing";
@@ -320,3 +322,112 @@ export const toggleFavouriteListing = async (
     await session.endSession();
   }
 };
+export async function getListing(
+  userId: string,
+  listingId: string,
+): Promise<GetListingResponse> {
+  logger.info("in service listing id is ", listingId);
+  const [listing, user] = await Promise.all([
+    ListingModel.findById(listingId).lean(),
+    UserModel.findById(userId).select("favorite_listings").lean(),
+  ]);
+
+  if (!listing) {
+    throw new Error("Listing not found");
+  }
+
+  logger.info(listing);
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const favorite = user.favorite_listings.some(
+    (id) => id.toString() === listing._id.toString(),
+  );
+
+  const { data, external_listing } = listing;
+
+  return {
+    success: true,
+
+    data: {
+      id: listing._id.toString(),
+
+      title: data.title,
+
+      images: data.images.length ? data.images : [DEFAULT_LISTING_IMAGE],
+      coverImage: data.cover_image ?? DEFAULT_LISTING_IMAGE,
+
+      carpetArea: data.carpet_area ?? undefined,
+
+      status: data.status,
+
+      address: {
+        locality: data.locality,
+        city: data.city,
+        address: data.address,
+      },
+
+      location: {
+        latitude: data.location.coordinates[1],
+        longitude: data.location.coordinates[0],
+      },
+
+      genderPreference: data.gender_preference,
+
+      bhk: data.bhk,
+      occupancy: data.occupancy,
+      totalOccupancy: data.total_occupancy ?? undefined,
+
+      furnishedStatus: data.furnished_status,
+
+      floor: data.floor ?? undefined,
+
+      addOns: data.add_ons.map((addon) => ({
+        type: addon.type,
+        desc: addon.desc ?? undefined,
+      })),
+      amenities: data.amenities.map((amenities) => ({
+        type: amenities.type,
+        desc: amenities.desc ?? undefined,
+      })),
+      houseRules: data.house_rules.map((houseRules) => ({
+        type: houseRules.type,
+        desc: houseRules.desc ?? undefined,
+      })),
+
+      rent: data.rent,
+      deposit: data.deposit ?? undefined,
+      brokerage: data.brokerage ?? undefined,
+      setupCost: data.setup_cost ?? undefined,
+
+      availableFrom: data.available_from?.toISOString(),
+      availableImmediately: data.available_immediately,
+
+      neighborhood: data.neighborhood,
+
+      views: listing.views,
+      favorites: listing.favorites,
+
+      favorite,
+
+      lister: external_listing?.lister
+        ? {
+            name: external_listing.lister.name,
+            age: external_listing.lister.age ?? undefined,
+            profilePic: external_listing.lister.profile_pic ?? undefined,
+            contactNumber: external_listing.lister.contact_number ?? undefined,
+            lifestyle: external_listing.lister.life_style ?? [],
+          }
+        : undefined,
+
+      externalListing: external_listing
+        ? {
+            source: external_listing.source,
+            url: external_listing.url,
+          }
+        : undefined,
+    },
+  };
+}

@@ -2,10 +2,12 @@ import { NextFunction, Request, Response } from "express";
 
 import {
   FavouriteListingBody,
+  GetListingParams,
   GetListingsSchema,
   GetMapListingsSchema,
 } from "@/types/request/listing";
 import * as ListingService from "@/service/listing";
+import logger from "@/utils/logger";
 
 export async function getListings(
   req: Request<{}, {}, {}>,
@@ -45,6 +47,24 @@ export async function favouriteListing(
       req.user!.id,
       req.body,
     );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getListing(
+  req: Request<GetListingParams, {}, {}>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { listingId } = req.params;
+
+    logger.info("trying to get listing ", listingId);
+
+    const result = await ListingService.getListing(req.user!.id, listingId);
+
     res.json(result);
   } catch (err) {
     next(err);
