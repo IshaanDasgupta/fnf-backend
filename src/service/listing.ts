@@ -145,7 +145,10 @@ export async function getListings(
   const data: ListingCardResponse[] = page.map((listing) => ({
     id: listing._id.toString(),
     title: listing.data.title,
-    coverImage: listing.data.cover_image || DEFAULT_LISTING_IMAGE,
+    coverImage:
+      listing.data.cover_image ||
+      listing.data.images?.[0] ||
+      DEFAULT_LISTING_IMAGE,
     address: {
       locality: listing.data.locality,
       city: listing.data.city,
@@ -245,7 +248,10 @@ export async function getMapListings(
     },
     rent: listing.data.rent,
     title: listing.data.title,
-    coverImage: listing.data.cover_image || DEFAULT_LISTING_IMAGE,
+    coverImage:
+      listing.data.cover_image ||
+      listing.data.images?.[0] ||
+      DEFAULT_LISTING_IMAGE,
     address: {
       locality: listing.data.locality,
       city: listing.data.city,
@@ -357,7 +363,10 @@ export async function getListing(
       title: data.title,
 
       images: data.images.length ? data.images : [DEFAULT_LISTING_IMAGE],
-      coverImage: data.cover_image ?? DEFAULT_LISTING_IMAGE,
+      coverImage:
+        listing.data.cover_image ||
+        listing.data.images?.[0] ||
+        DEFAULT_LISTING_IMAGE,
 
       carpetArea: data.carpet_area ?? undefined,
 
