@@ -1,55 +1,38 @@
 import {
   DEFAULT_LISTING_IMAGE,
   LISTING_SEARCH_RADIUS_METERS,
+  SEARCH_SORT_CONFIG,
 } from "@/config/constants";
 import { QUICK_FILTERS } from "@/config/quick-filters";
-import { Listing, ListingModel } from "@/models/listing.model";
+import { ListingModel } from "@/models/listing.model";
 import { UserModel } from "@/models/user.model";
 
 import {
   FavouriteListingBody,
   GetListingsQuery,
+  GetLocalitiesQuery,
   GetMapListingsQuery,
-  ListingCursor,
-  ListingCursorSchema,
+  SearchListingsParams,
 } from "@/types/request/listing";
 import {
   GetListingResponse,
   GetListingsResponse,
   GetMapListingsResponse,
   ListingCardResponse,
-  ListingResponse,
   MapListingsResponse,
+  GetSearchListingsResponse,
   ToggleFavouriteListingResponse,
+  GetLocalitiesResponse,
 } from "@/types/response/listing";
+import {
+  buildSearchPipeline,
+  buildSearchQuery,
+  decodeListingCursor,
+  encodeListingCursor,
+  encodeSearchListingCursor,
+} from "@/utils/listings";
 import logger from "@/utils/logger";
 import mongoose, { Types } from "mongoose";
-
-export function encodeListingCursor(cursor: ListingCursor): string {
-  const json = JSON.stringify(cursor);
-
-  return Buffer.from(json, "utf8").toString("base64url");
-}
-
-export function decodeListingCursor(cursor: string): ListingCursor {
-  let decoded: string;
-
-  try {
-    decoded = Buffer.from(cursor, "base64url").toString("utf8");
-  } catch {
-    throw new Error("Invalid cursor encoding");
-  }
-
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(decoded);
-  } catch {
-    throw new Error("Invalid cursor format");
-  }
-
-  return ListingCursorSchema.parse(parsed);
-}
 
 export async function getListings(
   userId: string,
@@ -195,6 +178,99 @@ export async function getListings(
   };
 }
 
+export async function searchListings(
+  userId: string,
+  input: SearchListingsParams,
+): Promise<GetSearchListingsResponse> {
+  const { limit, sortBy, sortOrder } = input;
+
+  const user = await UserModel.findById(userId)
+    .select("favorite_listings")
+    .lean();
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const favoriteSet = new Set(
+    user.favorite_listings.map((id) => id.toString()),
+  );
+
+  const query = buildSearchQuery(input);
+
+  const pipeline = buildSearchPipeline(input, query);
+
+  const listings = await ListingModel.aggregate(pipeline);
+
+  const hasNext = listings.length > limit;
+
+  const page = hasNext ? listings.slice(0, limit) : listings;
+
+  const data: ListingCardResponse[] = page.map((listing) => ({
+    id: listing._id.toString(),
+
+    title: listing.data.title,
+
+    coverImage:
+      listing.data.cover_image ||
+      listing.data.images?.[0] ||
+      DEFAULT_LISTING_IMAGE,
+
+    address: {
+      locality: listing.data.locality,
+      city: listing.data.city,
+    },
+
+    location: {
+      latitude: listing.data.location.coordinates[1],
+      longitude: listing.data.location.coordinates[0],
+    },
+
+    rent: listing.data.rent,
+
+    bhk: listing.data.bhk,
+
+    occupancy: listing.data.occupancy,
+
+    availableFrom: listing.data.available_from
+      ? new Date(listing.data.available_from).toISOString()
+      : undefined,
+
+    availableImmediately: listing.data.available_immediately,
+
+    tags: [
+      listing.data.furnished_status,
+      listing.data.floor !== undefined ? `${listing.data.floor}F` : undefined,
+    ]
+      .filter((tag): tag is string => tag !== undefined)
+      .slice(0, 4),
+
+    favorite: favoriteSet.has(listing._id.toString()),
+  }));
+
+  const lastListing = page.at(-1);
+
+  const sortConfig = SEARCH_SORT_CONFIG[sortBy];
+  const nextCursor =
+    hasNext && lastListing
+      ? encodeSearchListingCursor({
+          id: lastListing._id.toString(),
+          value: sortConfig.getValue(lastListing),
+          sortBy,
+          sortOrder,
+        })
+      : null;
+
+  return {
+    success: true,
+    data,
+    pagination: {
+      nextCursor,
+      hasNext,
+    },
+  };
+}
+
 export async function getMapListings(
   userId: string,
   input: GetMapListingsQuery,
@@ -266,6 +342,23 @@ export async function getMapListings(
     data,
   };
 }
+
+export const getLocalities = async (
+  input: GetLocalitiesQuery,
+): Promise<GetLocalitiesResponse> => {
+  const localities = await ListingModel.distinct("data.locality", {
+    "data.city": input.city,
+    "data.status": "active",
+    "data.locality": { $exists: true, $ne: "" },
+  });
+
+  localities.sort((a, b) => a.localeCompare(b));
+
+  return {
+    success: true,
+    data: localities,
+  };
+};
 
 export const toggleFavouriteListing = async (
   userId: string,

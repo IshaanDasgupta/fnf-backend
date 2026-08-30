@@ -7,7 +7,9 @@ import {
   FavouriteListingSchema,
   GetListingSchema,
   GetListingsSchema,
+  GetLocalitiesSchema,
   GetMapListingsSchema,
+  SearchListingsSchema,
 } from "@/types/request/listing";
 
 const router = Router();
@@ -22,12 +24,30 @@ router.get(
 );
 
 router.get(
+  "/search",
+  requireAuth,
+  validate({
+    query: SearchListingsSchema,
+  }),
+  ListingController.searchListings,
+);
+
+router.get(
   "/map",
   requireAuth,
   validate({
     query: GetMapListingsSchema,
   }),
   ListingController.getMapListings,
+);
+
+router.get(
+  "/localities",
+  requireAuth,
+  validate({
+    query: GetLocalitiesSchema,
+  }),
+  ListingController.getLocalities,
 );
 
 router.put(

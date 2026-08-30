@@ -47,6 +47,7 @@ export const ADD_ON_TYPES = [
 
   // Room / Home Features
   "Attached Bathroom",
+  "Geyser",
   "Balcony",
   "Private Terrace",
   "Walk-in Closet",
@@ -144,3 +145,26 @@ export type AmenityType = (typeof AMENITY_TYPES)[number];
 export type HouseRuleType = (typeof HOUSE_RULE_TYPES)[number];
 export type NeighborhoodType = (typeof NEIGHBORHOOD_TYPES)[number];
 export type ListingSource = (typeof LISTING_SOURCES)[number];
+
+export const SEARCH_SORT_CONFIG = {
+  distance: {
+    field: "distance",
+    getValue: (listing: any) => listing.distance,
+  },
+  rent: {
+    field: "data.rent",
+    getValue: (listing: any) => listing.data.rent,
+  },
+  creation_date: {
+    field: "sortValue",
+    getValue: (listing: any) => new Date(listing.createdAt).getTime(),
+  },
+  favorites: {
+    field: "favorites",
+    getValue: (listing: any) => listing.favorites,
+  },
+  views: {
+    field: "views",
+    getValue: (listing: any) => listing.views,
+  },
+} as const;

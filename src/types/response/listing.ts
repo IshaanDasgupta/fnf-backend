@@ -48,6 +48,15 @@ export interface GetListingsResponse {
   };
 }
 
+export interface GetSearchListingsResponse {
+  success: boolean;
+  data: ListingCardResponse[];
+  pagination: {
+    nextCursor: string | null;
+    hasNext: boolean;
+  };
+}
+
 export interface MapListingsResponse {
   id: string;
 
@@ -75,6 +84,11 @@ export interface MapListingsResponse {
 export interface GetMapListingsResponse {
   success: boolean;
   data: MapListingsResponse[];
+}
+
+export interface GetLocalitiesResponse {
+  success: boolean;
+  data: string[];
 }
 
 export interface ToggleFavouriteListingResponse {
