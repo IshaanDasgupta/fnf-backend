@@ -1,6 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import * as AuthService from "@/service/auth";
-import { RefreshBody, SendOTPBody, VerifyOTPBody } from "@/types/request/auth";
+import {
+  GoogleLoginBody,
+  RefreshBody,
+  SendOTPBody,
+  VerifyOTPBody,
+} from "@/types/request/auth";
 
 export async function sendOTP(
   req: Request<{}, {}, SendOTPBody>,
@@ -28,6 +33,23 @@ export async function verifyOTP(
     const { phone, otp } = req.body;
     const result = await AuthService.verifyOTP(phone, otp);
     return res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function googleLogin(
+  req: Request<{}, {}, GoogleLoginBody>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { idToken } = req.body;
+    const result = await AuthService.googleLogin(idToken);
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
   } catch (error) {
     next(error);
   }

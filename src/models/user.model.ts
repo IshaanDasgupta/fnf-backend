@@ -9,6 +9,7 @@ const userSchema = new Schema(
 
     email: {
       type: String,
+      lowercase: true,
     },
 
     age: {
@@ -26,6 +27,13 @@ const userSchema = new Schema(
       required: true,
       unique: true,
       trim: true,
+      sparse: true,
+    },
+
+    google_id: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
 
     favorite_listings: [

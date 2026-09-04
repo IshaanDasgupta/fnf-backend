@@ -1,11 +1,8 @@
+import { googleClient } from "@/config/google-auth-client";
 import { UserModel } from "@/models/user.model";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  getRefreshTokenExpiry,
-  verifyRefreshToken,
-} from "@/service/jwt";
+import { verifyRefreshToken } from "@/service/jwt";
 import * as TwilioService from "@/service/twilio";
+import { generateAuthResponse } from "@/utils/auth";
 
 export async function sendOTP(phone: string) {
   await TwilioService.sendOTP(phone);
@@ -28,29 +25,44 @@ export async function verifyOTP(phone: string, otp: string) {
     });
   }
 
-  const basicOnboardingCompleted = !!user.name && !!user.age && !!user.gender;
+  return generateAuthResponse(user);
+}
 
-  const userAuthData = {
-    id: user._id.toString(),
-    phone: user.phone_number,
-    name: user.name,
-    age: user.age,
-    gender: user.gender,
-    basicOnboardingCompleted,
-  };
+export async function googleLogin(idToken: string) {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
 
-  return {
-    user: userAuthData,
-    accessToken: generateAccessToken(userAuthData.id),
-    refreshToken: generateRefreshToken(userAuthData.id),
-    refreshExpiresAt: getRefreshTokenExpiry(),
-  };
+  const payload = ticket.getPayload();
+  if (!payload) throw new Error("Invalid Google token");
+
+  const googleId = payload.sub;
+  if (!googleId) throw new Error("Google account ID not found");
+
+  const email = payload.email;
+  if (!email) throw new Error("Google account email not found");
+  if (!payload.email_verified) throw new Error("Google email is not verified");
+
+  let user = await UserModel.findOne({
+    google_id: googleId,
+  });
+
+  if (!user) {
+    user = await UserModel.create({
+      google_id: googleId,
+      email,
+      name: payload.name,
+    });
+  }
+
+  return generateAuthResponse(user);
 }
 
 export async function refresh(refreshToken: string) {
   const { id: userId } = verifyRefreshToken(refreshToken);
 
-  let user = await UserModel.findOne({
+  const user = await UserModel.findOne({
     _id: userId,
   });
 
@@ -58,21 +70,5 @@ export async function refresh(refreshToken: string) {
     throw new Error("User not found");
   }
 
-  const basicOnboardingCompleted = !!user.name && !!user.age && !!user.gender;
-
-  const userAuthData = {
-    id: user._id.toString(),
-    phone: user.phone_number,
-    name: user.name,
-    age: user.age,
-    gender: user.gender,
-    basicOnboardingCompleted,
-  };
-
-  return {
-    user: userAuthData,
-    accessToken: generateAccessToken(userAuthData.id),
-    refreshToken: generateRefreshToken(userAuthData.id),
-    refreshExpiresAt: getRefreshTokenExpiry(),
-  };
+  return generateAuthResponse(user);
 }

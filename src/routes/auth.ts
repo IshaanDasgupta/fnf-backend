@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as AuthController from "@/controller/auth";
 import {
+  GoogleLoginSchema,
   RefreshSchema,
   SendOTPSchema,
   VerifyOTPSchema,
@@ -23,6 +24,14 @@ router.post(
     body: VerifyOTPSchema,
   }),
   AuthController.verifyOTP,
+);
+
+router.post(
+  "/google-login",
+  validate({
+    body: GoogleLoginSchema,
+  }),
+  AuthController.googleLogin,
 );
 
 router.post(

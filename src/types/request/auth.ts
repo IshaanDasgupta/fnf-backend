@@ -16,10 +16,15 @@ export const VerifyOTPSchema = z.object({
   otp: z.string().regex(/^\d{6}$/, "OTP must be exactly 6 digits"),
 });
 
+export const GoogleLoginSchema = z.object({
+  idToken: z.string(),
+});
+
 export const RefreshSchema = z.object({
   refreshToken: z.string(),
 });
 
 export type SendOTPBody = z.infer<typeof SendOTPSchema>;
 export type VerifyOTPBody = z.infer<typeof VerifyOTPSchema>;
+export type GoogleLoginBody = z.infer<typeof GoogleLoginSchema>;
 export type RefreshBody = z.infer<typeof RefreshSchema>;
