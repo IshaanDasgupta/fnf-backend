@@ -3,6 +3,7 @@ import {
   SEARCH_SORT_CONFIG,
 } from "@/config/constants";
 import {
+  Filter,
   ListingCursor,
   ListingCursorSchema,
   SearchListingCursor,
@@ -62,9 +63,9 @@ export function decodeSearchListingCursor(cursor: string): SearchListingCursor {
   return SearchListingCursorSchema.parse(parsed);
 }
 
-export function buildSearchQuery(input: SearchListingsParams) {
+export function buildSearchQuery(input: Filter) {
   const {
-    city,
+    gender,
     locality,
     bhk,
     occupancy,
@@ -82,10 +83,13 @@ export function buildSearchQuery(input: SearchListingsParams) {
     houseRules,
   } = input;
 
-  const query: Record<string, unknown> = {
-    "data.city": city,
-    "data.status": "active",
-  };
+  const query: Record<string, unknown> = {};
+
+  query["data.status"] = "active";
+
+  if (gender) {
+    query["data.gender"] = gender;
+  }
 
   if (locality) {
     query["data.locality"] = {

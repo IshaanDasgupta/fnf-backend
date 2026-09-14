@@ -56,6 +56,8 @@ export async function googleLogin(idToken: string) {
     });
   }
 
+  console.log(user, generateAuthResponse(user));
+
   return generateAuthResponse(user);
 }
 

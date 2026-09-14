@@ -13,7 +13,6 @@ import {
 export interface ListingCardResponse {
   id: string;
 
-  title: string;
   coverImage: string;
 
   address: {
@@ -21,20 +20,19 @@ export interface ListingCardResponse {
     city: City;
   };
 
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-
   rent: number;
 
   bhk: BhkType;
   occupancy: OccupancyType;
 
+  totalOccupancy?: number;
+
+  furnishedStatus: FurnishedStatus;
+
+  genderPreference: GenderPreference;
+
   availableFrom?: string;
   availableImmediately: boolean;
-
-  tags: string[];
 
   favorite: boolean;
 }
@@ -67,7 +65,6 @@ export interface MapListingsResponse {
 
   rent: number;
 
-  title: string;
   coverImage: string;
 
   address: {
@@ -77,6 +74,10 @@ export interface MapListingsResponse {
 
   bhk: BhkType;
   occupancy: OccupancyType;
+  totalOccupancy?: number;
+  furnishedStatus: FurnishedStatus;
+
+  genderPreference: GenderPreference;
 
   favorite: boolean;
 }
@@ -84,11 +85,6 @@ export interface MapListingsResponse {
 export interface GetMapListingsResponse {
   success: boolean;
   data: MapListingsResponse[];
-}
-
-export interface GetLocalitiesResponse {
-  success: boolean;
-  data: string[];
 }
 
 export interface ToggleFavouriteListingResponse {

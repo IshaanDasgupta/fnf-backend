@@ -24,7 +24,6 @@ const userSchema = new Schema(
 
     phone_number: {
       type: String,
-      required: true,
       unique: true,
       trim: true,
       sparse: true,
@@ -47,6 +46,15 @@ const userSchema = new Schema(
     timestamps: true,
   },
 );
+
+userSchema.pre("validate", function () {
+  if (!this.phone_number && !this.google_id) {
+    this.invalidate(
+      "phone_number",
+      "Either phone number or Google ID is required",
+    );
+  }
+});
 
 export type User = InferSchemaType<typeof userSchema>;
 

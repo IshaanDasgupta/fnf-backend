@@ -4,6 +4,8 @@ import cors from "cors";
 import authRoutes from "@/routes/auth";
 import userRoutes from "@/routes/user";
 import listingRoutes from "@/routes/listing";
+import localityRoutes from "@/routes/locality";
+import redirectRoutes from "@/routes/redirect";
 
 import { jwtMiddleware } from "@/middleware/jwt";
 import { requestLoggerMiddleware } from "@/middleware/logger";
@@ -22,6 +24,8 @@ app.use(requestLoggerMiddleware);
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/listing", listingRoutes);
+app.use("/locality", localityRoutes);
+app.use("/redirect", redirectRoutes);
 
 app.use(errorMiddleware);
 

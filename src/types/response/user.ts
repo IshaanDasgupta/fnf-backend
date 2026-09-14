@@ -1,4 +1,10 @@
-import { GenderPreference } from "@/config/constants";
+import {
+  BhkType,
+  City,
+  FurnishedStatus,
+  GenderPreference,
+  OccupancyType,
+} from "@/config/constants";
 
 export interface UpsertBasicResponse {
   id: string;
@@ -11,11 +17,27 @@ export interface UpsertBasicResponse {
 
 export interface ProfileListingResponse {
   id: string;
-  title: string;
+
   coverImage: string;
-  city: string;
-  locality: string;
+
+  address: {
+    locality: string;
+    city: City;
+  };
+
   rent: number;
+
+  bhk: BhkType;
+  occupancy: OccupancyType;
+
+  totalOccupancy?: number;
+
+  furnishedStatus: FurnishedStatus;
+
+  genderPreference: GenderPreference;
+
+  availableFrom?: string;
+  availableImmediately: boolean;
 }
 
 export interface ProfileResponse {

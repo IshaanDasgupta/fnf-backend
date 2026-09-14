@@ -4,7 +4,6 @@ import {
   FavouriteListingBody,
   GetListingParams,
   GetListingsSchema,
-  GetLocalitiesSchema,
   GetMapListingsSchema,
   SearchListingsSchema,
 } from "@/types/request/listing";
@@ -47,20 +46,6 @@ export async function getMapListings(
   try {
     const query = GetMapListingsSchema.parse(req.query);
     const result = await ListingService.getMapListings(req.user!.id, query);
-    res.json(result);
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function getLocalities(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  try {
-    const query = GetLocalitiesSchema.parse(req.query);
-    const result = await ListingService.getLocalities(query);
     res.json(result);
   } catch (err) {
     next(err);

@@ -46,10 +46,7 @@ export async function googleLogin(
   try {
     const { idToken } = req.body;
     const result = await AuthService.googleLogin(idToken);
-    return res.status(200).json({
-      success: true,
-      data: result,
-    });
+    return res.json(result);
   } catch (error) {
     next(error);
   }

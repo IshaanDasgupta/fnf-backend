@@ -10,7 +10,6 @@ import { UserModel } from "@/models/user.model";
 import {
   FavouriteListingBody,
   GetListingsQuery,
-  GetLocalitiesQuery,
   GetMapListingsQuery,
   SearchListingsParams,
 } from "@/types/request/listing";
@@ -22,7 +21,6 @@ import {
   MapListingsResponse,
   GetSearchListingsResponse,
   ToggleFavouriteListingResponse,
-  GetLocalitiesResponse,
 } from "@/types/response/listing";
 import {
   buildSearchPipeline,
@@ -127,7 +125,6 @@ export async function getListings(
 
   const data: ListingCardResponse[] = page.map((listing) => ({
     id: listing._id.toString(),
-    title: listing.data.title,
     coverImage:
       listing.data.cover_image ||
       listing.data.images?.[0] ||
@@ -136,25 +133,16 @@ export async function getListings(
       locality: listing.data.locality,
       city: listing.data.city,
     },
-    location: {
-      latitude: listing.data.location.coordinates[1],
-      longitude: listing.data.location.coordinates[0],
-    },
     rent: listing.data.rent,
     bhk: listing.data.bhk,
     occupancy: listing.data.occupancy,
+    totalOccupancy: listing.data.total_occupancy,
+    furnishedStatus: listing.data.furnished_status,
+    genderPreference: listing.data.gender_preference,
     availableFrom: listing.data.available_from
       ? new Date(listing.data.available_from).toISOString()
       : undefined,
     availableImmediately: listing.data.available_immediately,
-    tags: [
-      listing.data.furnished_status,
-      listing.data.floor !== undefined ? `${listing.data.floor}F` : undefined,
-      ...(listing.data.pets_present ? ["Pets"] : []),
-      ...(listing.data.wifi ? ["WiFi"] : []),
-    ]
-      .filter((tag): tag is string => tag !== undefined)
-      .slice(0, 4),
     favorite: favoriteSet.has(listing._id.toString()),
   }));
 
@@ -182,7 +170,7 @@ export async function searchListings(
   userId: string,
   input: SearchListingsParams,
 ): Promise<GetSearchListingsResponse> {
-  const { limit, sortBy, sortOrder } = input;
+  const { limit, sortBy, sortOrder, city } = input;
 
   const user = await UserModel.findById(userId)
     .select("favorite_listings")
@@ -198,6 +186,8 @@ export async function searchListings(
 
   const query = buildSearchQuery(input);
 
+  query["data.city"] = city;
+
   const pipeline = buildSearchPipeline(input, query);
 
   const listings = await ListingModel.aggregate(pipeline);
@@ -208,43 +198,29 @@ export async function searchListings(
 
   const data: ListingCardResponse[] = page.map((listing) => ({
     id: listing._id.toString(),
-
-    title: listing.data.title,
-
     coverImage:
       listing.data.cover_image ||
       listing.data.images?.[0] ||
       DEFAULT_LISTING_IMAGE,
-
     address: {
       locality: listing.data.locality,
       city: listing.data.city,
     },
-
     location: {
       latitude: listing.data.location.coordinates[1],
       longitude: listing.data.location.coordinates[0],
     },
-
     rent: listing.data.rent,
-
     bhk: listing.data.bhk,
-
     occupancy: listing.data.occupancy,
-
+    totalOccupancy: listing.data.total_occupancy,
+    furnishedStatus: listing.data.furnished_status,
+    genderPreference: listing.data.gender_preference,
     availableFrom: listing.data.available_from
       ? new Date(listing.data.available_from).toISOString()
       : undefined,
 
     availableImmediately: listing.data.available_immediately,
-
-    tags: [
-      listing.data.furnished_status,
-      listing.data.floor !== undefined ? `${listing.data.floor}F` : undefined,
-    ]
-      .filter((tag): tag is string => tag !== undefined)
-      .slice(0, 4),
-
     favorite: favoriteSet.has(listing._id.toString()),
   }));
 
@@ -275,7 +251,7 @@ export async function getMapListings(
   userId: string,
   input: GetMapListingsQuery,
 ): Promise<GetMapListingsResponse> {
-  const { north, south, east, west, limit, quickFilters } = input;
+  const { north, south, east, west, limit } = input;
 
   const user = await UserModel.findById(userId)
     .select("favorite_listings")
@@ -289,27 +265,16 @@ export async function getMapListings(
     user.favorite_listings.map((id) => id.toString()),
   );
 
-  const query: Record<string, unknown> = {
-    "data.status": "active",
-    "data.location": {
-      $geoWithin: {
-        $box: [
-          [west, south],
-          [east, north],
-        ],
-      },
+  const query = buildSearchQuery(input);
+
+  query["data.location"] = {
+    $geoWithin: {
+      $box: [
+        [west, south],
+        [east, north],
+      ],
     },
   };
-
-  const selectedFilters = QUICK_FILTERS.filter((filter) =>
-    quickFilters.includes(filter.id),
-  );
-
-  for (const filter of selectedFilters) {
-    if (filter.query) {
-      Object.assign(query, filter.query);
-    }
-  }
 
   const listings = await ListingModel.find(query)
     .sort({ views: -1, _id: 1 })
@@ -323,7 +288,6 @@ export async function getMapListings(
       longitude: listing.data.location.coordinates[0],
     },
     rent: listing.data.rent,
-    title: listing.data.title,
     coverImage:
       listing.data.cover_image ||
       listing.data.images?.[0] ||
@@ -334,6 +298,9 @@ export async function getMapListings(
     },
     bhk: listing.data.bhk,
     occupancy: listing.data.occupancy,
+    totalOccupancy: listing.data.total_occupancy ?? undefined,
+    furnishedStatus: listing.data.furnished_status,
+    genderPreference: listing.data.gender_preference,
     favorite: favoriteSet.has(listing._id.toString()),
   }));
 
@@ -342,24 +309,6 @@ export async function getMapListings(
     data,
   };
 }
-
-export const getLocalities = async (
-  input: GetLocalitiesQuery,
-): Promise<GetLocalitiesResponse> => {
-  const localities = await ListingModel.distinct("data.locality", {
-    "data.city": input.city,
-    "data.status": "active",
-    "data.locality": { $exists: true, $ne: "" },
-  });
-
-  localities.sort((a, b) => a.localeCompare(b));
-
-  return {
-    success: true,
-    data: localities,
-  };
-};
-
 export const toggleFavouriteListing = async (
   userId: string,
   input: FavouriteListingBody,

@@ -7,4 +7,6 @@ export const env = {
   verifySid: process.env.TWILIO_VERIFY_SERVICE_SID!,
   jwtSecret: process.env.JWT_SECRET!,
   googleClientId: process.env.GOOGLE_CLIENT_ID,
+  appDeeplinkScheme: process.env.APP_DEEP_LINK_SCHEME,
+  androidPackageName: process.env.ANDROID_PACKAGE_NAME,
 };

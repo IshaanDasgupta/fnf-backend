@@ -7,7 +7,6 @@ import {
   FavouriteListingSchema,
   GetListingSchema,
   GetListingsSchema,
-  GetLocalitiesSchema,
   GetMapListingsSchema,
   SearchListingsSchema,
 } from "@/types/request/listing";
@@ -39,15 +38,6 @@ router.get(
     query: GetMapListingsSchema,
   }),
   ListingController.getMapListings,
-);
-
-router.get(
-  "/localities",
-  requireAuth,
-  validate({
-    query: GetLocalitiesSchema,
-  }),
-  ListingController.getLocalities,
 );
 
 router.put(

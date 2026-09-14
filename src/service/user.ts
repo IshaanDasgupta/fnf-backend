@@ -27,11 +27,24 @@ export async function getProfile(userId: string): Promise<ProfileResponse> {
     gender: user.gender!,
     favorite_listings: user.favorite_listings.map((listing: any) => ({
       id: listing._id.toString(),
-      title: listing.data.title,
-      coverImage: listing.data.images?.[0] ?? DEFAULT_LISTING_IMAGE,
-      city: listing.data.city,
-      locality: listing.data.locality,
+      coverImage:
+        listing.data.cover_image ||
+        listing.data.images?.[0] ||
+        DEFAULT_LISTING_IMAGE,
+      address: {
+        locality: listing.data.locality,
+        city: listing.data.city,
+      },
       rent: listing.data.rent,
+      bhk: listing.data.bhk,
+      occupancy: listing.data.occupancy,
+      totalOccupancy: listing.data.total_occupancy,
+      furnishedStatus: listing.data.furnished_status,
+      genderPreference: listing.data.gender_preference,
+      availableFrom: listing.data.available_from
+        ? new Date(listing.data.available_from).toISOString()
+        : undefined,
+      availableImmediately: listing.data.available_immediately,
     })),
   };
 }
