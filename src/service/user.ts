@@ -2,7 +2,6 @@ import { DEFAULT_LISTING_IMAGE } from "@/config/constants";
 import { UserModel } from "@/models/user.model";
 import { UpsertBasicBody } from "@/types/request/user";
 import { ProfileResponse, UpsertBasicResponse } from "@/types/response/user";
-import logger from "@/utils/logger";
 
 export async function getProfile(userId: string): Promise<ProfileResponse> {
   const user = await UserModel.findById(userId)
@@ -20,7 +19,6 @@ export async function getProfile(userId: string): Promise<ProfileResponse> {
 
   return {
     id: user._id.toString(),
-    phone: user.phone_number,
     name: user.name!,
     email: user.email!,
     age: user.age!,
@@ -76,7 +74,6 @@ export async function upsertBasic(
 
   return {
     id: user._id.toString(),
-    phone: user.phone_number,
     name: user.name!,
     email: user.email!,
     age: user.age!,

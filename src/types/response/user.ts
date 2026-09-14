@@ -8,7 +8,6 @@ import {
 
 export interface UpsertBasicResponse {
   id: string;
-  phone: string;
   name: string;
   email: string;
   age: number;
@@ -42,7 +41,6 @@ export interface ProfileListingResponse {
 
 export interface ProfileResponse {
   id: string;
-  phone: string;
   name: string;
   email: string;
   age: number;
