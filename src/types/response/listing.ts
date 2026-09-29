@@ -6,9 +6,17 @@ import {
   FurnishedStatus,
   GenderPreference,
   HouseRuleType,
+  ListingStatus,
   NeighborhoodType,
-  OccupancyType,
+  RentalScopeType,
+  ServiceType,
 } from "@/config/constants";
+
+export interface RentalScopeResponse {
+  type: RentalScopeType;
+  capacity: number;
+  totalOccupancy: number;
+}
 
 export interface ListingCardResponse {
   id: string;
@@ -23,13 +31,11 @@ export interface ListingCardResponse {
   rent: number;
 
   bhk: BhkType;
-  occupancy: OccupancyType;
-
-  totalOccupancy?: number;
+  rentalScope: RentalScopeResponse;
 
   furnishedStatus: FurnishedStatus;
 
-  genderPreference: GenderPreference;
+  genderPreference?: GenderPreference;
 
   availableFrom?: string;
   availableImmediately: boolean;
@@ -73,11 +79,10 @@ export interface MapListingsResponse {
   };
 
   bhk: BhkType;
-  occupancy: OccupancyType;
-  totalOccupancy?: number;
+  rentalScope: RentalScopeResponse;
   furnishedStatus: FurnishedStatus;
 
-  genderPreference: GenderPreference;
+  genderPreference?: GenderPreference;
 
   favorite: boolean;
 }
@@ -97,14 +102,14 @@ export interface ToggleFavouriteListingResponse {
 export interface ListingResponse {
   id: string;
 
-  title: string;
-
   images: string[];
   coverImage: string;
 
   carpetArea?: number;
 
-  status: string;
+  attachedWashroom?: boolean;
+
+  status: ListingStatus;
 
   address: {
     locality: string;
@@ -117,15 +122,21 @@ export interface ListingResponse {
     longitude: number;
   };
 
-  genderPreference: GenderPreference;
+  genderPreference?: GenderPreference;
 
   bhk: BhkType;
-  occupancy: OccupancyType;
-  totalOccupancy?: number;
+  rentalScope: RentalScopeResponse;
 
   furnishedStatus: FurnishedStatus;
 
   floor?: number;
+
+  services: {
+    type: ServiceType;
+    desc?: string;
+    price?: number;
+    included: boolean;
+  }[];
 
   addOns: {
     type: AddOnType;
@@ -146,12 +157,14 @@ export interface ListingResponse {
   deposit?: number;
   brokerage?: number;
   setupCost?: number;
+  moveInCharges?: number;
 
   availableFrom?: string;
   availableImmediately: boolean;
 
-  neighborhood: {
+  nearbyPlaces: {
     type: NeighborhoodType;
+    name: string;
     distance: number;
   }[];
 
@@ -160,17 +173,12 @@ export interface ListingResponse {
 
   favorite: boolean;
 
-  lister?: {
-    name: string;
-    age?: number;
-    profilePic?: string;
-    contactNumber?: string;
-    lifestyle: string[];
-  };
+  listerId?: string;
 
   externalListing?: {
     source: string;
     url: string;
+    author: string;
   };
 }
 

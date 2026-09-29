@@ -19,7 +19,7 @@ export const QUICK_FILTERS: QuickFilter[] = [
     id: "furnished",
     label: "Furnished",
     query: {
-      "data.furnished_status": "fully-furnished",
+      "property.furnished_status": "fully-furnished",
     },
   },
 
@@ -27,7 +27,7 @@ export const QUICK_FILTERS: QuickFilter[] = [
     id: "under-15k",
     label: "Under ₹15K",
     query: {
-      "data.rent": { $lt: 15_000 },
+      "pricing.rent": { $lt: 15_000 },
     },
   },
 
@@ -35,39 +35,15 @@ export const QUICK_FILTERS: QuickFilter[] = [
     id: "available-now",
     label: "Available Now",
     query: {
-      "data.available_immediately": true,
+      "availability.available_immediately": true,
     },
   },
 
   {
-    id: "single-occupancy",
-    label: "Single Occupancy",
+    id: "attached-washroom",
+    label: "Attached Washroom",
     query: {
-      "data.occupancy": "single",
-    },
-  },
-
-  {
-    id: "attached-bathroom",
-    label: "Attached Bathroom",
-    query: {
-      "data.attached_bathroom": true,
-    },
-  },
-
-  {
-    id: "wifi",
-    label: "Wi-Fi Included",
-    query: {
-      "data.wifi": "included",
-    },
-  },
-
-  {
-    id: "pet-friendly",
-    label: "Pet Friendly",
-    query: {
-      "data.pets_present": true,
+      "property.attached_washroom": true,
     },
   },
 
@@ -75,7 +51,7 @@ export const QUICK_FILTERS: QuickFilter[] = [
     id: "1bhk",
     label: "1 BHK",
     query: {
-      "data.bhk": "1BHK",
+      "property.bhk": "1 BHK",
     },
   },
 
@@ -83,7 +59,7 @@ export const QUICK_FILTERS: QuickFilter[] = [
     id: "2bhk",
     label: "2 BHK",
     query: {
-      "data.bhk": "2BHK",
+      "property.bhk": "2 BHK",
     },
   },
 ];

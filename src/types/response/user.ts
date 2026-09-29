@@ -3,15 +3,17 @@ import {
   City,
   FurnishedStatus,
   GenderPreference,
-  OccupancyType,
+  RentalScopeType,
 } from "@/config/constants";
+
+export type UserGender = "male" | "female";
 
 export interface UpsertBasicResponse {
   id: string;
   name: string;
   email: string;
   age: number;
-  gender: GenderPreference;
+  gender: UserGender;
 }
 
 export interface ProfileListingResponse {
@@ -27,13 +29,15 @@ export interface ProfileListingResponse {
   rent: number;
 
   bhk: BhkType;
-  occupancy: OccupancyType;
-
-  totalOccupancy?: number;
+  rentalScope: {
+    type: RentalScopeType;
+    capacity: number;
+    totalOccupancy: number;
+  };
 
   furnishedStatus: FurnishedStatus;
 
-  genderPreference: GenderPreference;
+  genderPreference?: GenderPreference;
 
   availableFrom?: string;
   availableImmediately: boolean;
@@ -44,7 +48,7 @@ export interface ProfileResponse {
   name: string;
   email: string;
   age: number;
-  gender: GenderPreference;
+  gender: UserGender;
   favorite_listings: ProfileListingResponse[];
 }
 

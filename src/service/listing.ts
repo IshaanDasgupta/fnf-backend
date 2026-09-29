@@ -51,8 +51,8 @@ export async function getListings(
   );
 
   const query: Record<string, unknown> = {
-    "data.city": city,
-    "data.status": "active",
+    "property.city": city,
+    status: "active",
   };
 
   const selectedFilters = QUICK_FILTERS.filter((filter) =>
@@ -74,7 +74,7 @@ export async function getListings(
           type: "Point",
           coordinates: [longitude, latitude],
         },
-        key: "data.location",
+        key: "property.location",
         distanceField: "distance",
         maxDistance: LISTING_SEARCH_RADIUS_METERS,
         spherical: true,
@@ -126,23 +126,25 @@ export async function getListings(
   const data: ListingCardResponse[] = page.map((listing) => ({
     id: listing._id.toString(),
     coverImage:
-      listing.data.cover_image ||
-      listing.data.images?.[0] ||
-      DEFAULT_LISTING_IMAGE,
+      listing.cover_image || listing.images?.[0] || DEFAULT_LISTING_IMAGE,
     address: {
-      locality: listing.data.locality,
-      city: listing.data.city,
+      locality: listing.property.locality,
+      city: listing.property.city,
     },
-    rent: listing.data.rent,
-    bhk: listing.data.bhk,
-    occupancy: listing.data.occupancy,
-    totalOccupancy: listing.data.total_occupancy,
-    furnishedStatus: listing.data.furnished_status,
-    genderPreference: listing.data.gender_preference,
-    availableFrom: listing.data.available_from
-      ? new Date(listing.data.available_from).toISOString()
+    rent: listing.pricing.rent,
+    bhk: listing.property.bhk,
+    rentalScope: {
+      type: listing.rental_scope.type,
+      capacity: listing.rental_scope.capacity,
+      totalOccupancy: listing.rental_scope.total_occupancy,
+    },
+    furnishedStatus: listing.property.furnished_status,
+    genderPreference: listing.preferences?.gender ?? undefined,
+    availableFrom: listing.availability?.available_from
+      ? new Date(listing.availability.available_from).toISOString()
       : undefined,
-    availableImmediately: listing.data.available_immediately,
+    availableImmediately:
+      listing.availability?.available_immediately ?? false,
     favorite: favoriteSet.has(listing._id.toString()),
   }));
 
@@ -186,7 +188,7 @@ export async function searchListings(
 
   const query = buildSearchQuery(input);
 
-  query["data.city"] = city;
+  query["property.city"] = city;
 
   const pipeline = buildSearchPipeline(input, query);
 
@@ -199,28 +201,26 @@ export async function searchListings(
   const data: ListingCardResponse[] = page.map((listing) => ({
     id: listing._id.toString(),
     coverImage:
-      listing.data.cover_image ||
-      listing.data.images?.[0] ||
-      DEFAULT_LISTING_IMAGE,
+      listing.cover_image || listing.images?.[0] || DEFAULT_LISTING_IMAGE,
     address: {
-      locality: listing.data.locality,
-      city: listing.data.city,
+      locality: listing.property.locality,
+      city: listing.property.city,
     },
-    location: {
-      latitude: listing.data.location.coordinates[1],
-      longitude: listing.data.location.coordinates[0],
+    rent: listing.pricing.rent,
+    bhk: listing.property.bhk,
+    rentalScope: {
+      type: listing.rental_scope.type,
+      capacity: listing.rental_scope.capacity,
+      totalOccupancy: listing.rental_scope.total_occupancy,
     },
-    rent: listing.data.rent,
-    bhk: listing.data.bhk,
-    occupancy: listing.data.occupancy,
-    totalOccupancy: listing.data.total_occupancy,
-    furnishedStatus: listing.data.furnished_status,
-    genderPreference: listing.data.gender_preference,
-    availableFrom: listing.data.available_from
-      ? new Date(listing.data.available_from).toISOString()
+    furnishedStatus: listing.property.furnished_status,
+    genderPreference: listing.preferences?.gender ?? undefined,
+    availableFrom: listing.availability?.available_from
+      ? new Date(listing.availability.available_from).toISOString()
       : undefined,
 
-    availableImmediately: listing.data.available_immediately,
+    availableImmediately:
+      listing.availability?.available_immediately ?? false,
     favorite: favoriteSet.has(listing._id.toString()),
   }));
 
@@ -267,7 +267,7 @@ export async function getMapListings(
 
   const query = buildSearchQuery(input);
 
-  query["data.location"] = {
+  query["property.location"] = {
     $geoWithin: {
       $box: [
         [west, south],
@@ -284,23 +284,24 @@ export async function getMapListings(
   const data: MapListingsResponse[] = listings.map((listing) => ({
     id: listing._id.toString(),
     location: {
-      latitude: listing.data.location.coordinates[1],
-      longitude: listing.data.location.coordinates[0],
+      latitude: listing.property.location.coordinates[1],
+      longitude: listing.property.location.coordinates[0],
     },
-    rent: listing.data.rent,
+    rent: listing.pricing.rent,
     coverImage:
-      listing.data.cover_image ||
-      listing.data.images?.[0] ||
-      DEFAULT_LISTING_IMAGE,
+      listing.cover_image || listing.images?.[0] || DEFAULT_LISTING_IMAGE,
     address: {
-      locality: listing.data.locality,
-      city: listing.data.city,
+      locality: listing.property.locality,
+      city: listing.property.city,
     },
-    bhk: listing.data.bhk,
-    occupancy: listing.data.occupancy,
-    totalOccupancy: listing.data.total_occupancy ?? undefined,
-    furnishedStatus: listing.data.furnished_status,
-    genderPreference: listing.data.gender_preference,
+    bhk: listing.property.bhk,
+    rentalScope: {
+      type: listing.rental_scope.type,
+      capacity: listing.rental_scope.capacity,
+      totalOccupancy: listing.rental_scope.total_occupancy,
+    },
+    furnishedStatus: listing.property.furnished_status,
+    genderPreference: listing.preferences?.gender ?? undefined,
     favorite: favoriteSet.has(listing._id.toString()),
   }));
 
@@ -394,7 +395,25 @@ export async function getListing(
     (id) => id.toString() === listing._id.toString(),
   );
 
-  const { data, external_listing } = listing;
+  const {
+    property,
+    rental_scope,
+    pricing,
+    availability,
+    preferences,
+    services,
+    add_ons,
+    amenities,
+    house_rules,
+    nearby_places,
+    images,
+    cover_image,
+    status,
+    views,
+    favorites,
+    lister_id,
+    external_listing,
+  } = listing as any;
 
   return {
     success: true,
@@ -402,81 +421,86 @@ export async function getListing(
     data: {
       id: listing._id.toString(),
 
-      title: data.title,
+      images: images?.length ? images : [DEFAULT_LISTING_IMAGE],
+      coverImage: cover_image || images?.[0] || DEFAULT_LISTING_IMAGE,
 
-      images: data.images.length ? data.images : [DEFAULT_LISTING_IMAGE],
-      coverImage:
-        listing.data.cover_image ||
-        listing.data.images?.[0] ||
-        DEFAULT_LISTING_IMAGE,
+      carpetArea: property?.carpet_area ?? undefined,
+      attachedWashroom: property?.attached_washroom ?? undefined,
 
-      carpetArea: data.carpet_area ?? undefined,
-
-      status: data.status,
+      status,
 
       address: {
-        locality: data.locality,
-        city: data.city,
-        address: data.address,
+        locality: property.locality,
+        city: property.city,
+        address: property.address,
       },
 
       location: {
-        latitude: data.location.coordinates[1],
-        longitude: data.location.coordinates[0],
+        latitude: property.location.coordinates[1],
+        longitude: property.location.coordinates[0],
       },
 
-      genderPreference: data.gender_preference,
+      genderPreference: preferences?.gender ?? undefined,
 
-      bhk: data.bhk,
-      occupancy: data.occupancy,
-      totalOccupancy: data.total_occupancy ?? undefined,
+      bhk: property.bhk,
+      rentalScope: {
+        type: rental_scope.type,
+        capacity: rental_scope.capacity,
+        totalOccupancy: rental_scope.total_occupancy,
+      },
 
-      furnishedStatus: data.furnished_status,
+      furnishedStatus: property.furnished_status,
 
-      floor: data.floor ?? undefined,
+      floor: property?.floor ?? undefined,
 
-      addOns: data.add_ons.map((addon) => ({
+      services: (services ?? []).map((service: any) => ({
+        type: service.type,
+        desc: service.desc ?? undefined,
+        price: service.price ?? undefined,
+        included: service.included ?? false,
+      })),
+      addOns: (add_ons ?? []).map((addon: any) => ({
         type: addon.type,
         desc: addon.desc ?? undefined,
       })),
-      amenities: data.amenities.map((amenities) => ({
-        type: amenities.type,
-        desc: amenities.desc ?? undefined,
+      amenities: (amenities ?? []).map((amenity: any) => ({
+        type: amenity.type,
+        desc: amenity.desc ?? undefined,
       })),
-      houseRules: data.house_rules.map((houseRules) => ({
-        type: houseRules.type,
-        desc: houseRules.desc ?? undefined,
+      houseRules: (house_rules ?? []).map((rule: any) => ({
+        type: rule.type,
+        desc: rule.desc ?? undefined,
       })),
 
-      rent: data.rent,
-      deposit: data.deposit ?? undefined,
-      brokerage: data.brokerage ?? undefined,
-      setupCost: data.setup_cost ?? undefined,
+      rent: pricing.rent,
+      deposit: pricing?.deposit ?? undefined,
+      brokerage: pricing?.brokerage ?? undefined,
+      setupCost: pricing?.setup_cost ?? undefined,
+      moveInCharges: pricing?.move_in_charges ?? undefined,
 
-      availableFrom: data.available_from?.toISOString(),
-      availableImmediately: data.available_immediately,
+      availableFrom: availability?.available_from
+        ? new Date(availability.available_from).toISOString()
+        : undefined,
+      availableImmediately: availability?.available_immediately ?? false,
 
-      neighborhood: data.neighborhood,
+      nearbyPlaces: (nearby_places ?? []).map((place: any) => ({
+        type: place.type,
+        name: place.name,
+        distance: place.distance,
+      })),
 
-      views: listing.views,
-      favorites: listing.favorites,
+      views,
+      favorites,
 
       favorite,
 
-      lister: external_listing?.lister
-        ? {
-            name: external_listing.lister.name,
-            age: external_listing.lister.age ?? undefined,
-            profilePic: external_listing.lister.profile_pic ?? undefined,
-            contactNumber: external_listing.lister.contact_number ?? undefined,
-            lifestyle: external_listing.lister.life_style ?? [],
-          }
-        : undefined,
+      listerId: lister_id ?? undefined,
 
       externalListing: external_listing
         ? {
             source: external_listing.source,
             url: external_listing.url,
+            author: external_listing.author,
           }
         : undefined,
     },

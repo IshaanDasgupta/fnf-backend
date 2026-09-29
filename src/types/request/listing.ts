@@ -4,8 +4,10 @@ import {
   BHK_TYPES,
   CITIES,
   FURNISHED_STATUSES,
+  GENDER_PREFERENCES,
   HOUSE_RULE_TYPES,
-  OCCUPANCY_TYPES,
+  RENTAL_SCOPE_TYPES,
+  SERVICES_TYPES,
 } from "@/config/constants";
 import { QUICK_FILTER_IDS } from "@/config/quick-filters";
 import { Types } from "mongoose";
@@ -13,11 +15,12 @@ import { z } from "zod";
 
 const CitySchema = z.enum(CITIES);
 const BHKTypeSchema = z.enum(BHK_TYPES);
-const OccupancyTypeSchema = z.enum(OCCUPANCY_TYPES);
+const RentalScopeTypeSchema = z.enum(RENTAL_SCOPE_TYPES);
 const FurnishedStatusSchema = z.enum(FURNISHED_STATUSES);
 const AddOnTypeSchema = z.enum(ADD_ON_TYPES);
 const AmenityTypeSchema = z.enum(AMENITY_TYPES);
 const HouseRuleTypeSchema = z.enum(HOUSE_RULE_TYPES);
+const ServiceTypeSchema = z.enum(SERVICES_TYPES);
 const QuickFilterIdSchema = z.enum(QUICK_FILTER_IDS);
 
 export const ListingCursorSchema = z.object({
@@ -54,7 +57,7 @@ export const FilterSchema = z.object({
     })
     .pipe(z.array(BHKTypeSchema)),
 
-  occupancy: z
+  rentalType: z
     .string()
     .optional()
     .transform((value) => {
@@ -64,7 +67,7 @@ export const FilterSchema = z.object({
 
       return value.split(",");
     })
-    .pipe(z.array(OccupancyTypeSchema)),
+    .pipe(z.array(RentalScopeTypeSchema)),
 
   furnishedStatus: z
     .string()
@@ -87,10 +90,18 @@ export const FilterSchema = z.object({
   floorMin: z.coerce.number().finite().nonnegative().optional(),
   floorMax: z.coerce.number().finite().nonnegative().optional(),
 
+  capacityMin: z.coerce.number().int().positive().optional(),
+  capacityMax: z.coerce.number().int().positive().optional(),
+
   totalOccupancyMin: z.coerce.number().int().positive().optional(),
   totalOccupancyMax: z.coerce.number().int().positive().optional(),
 
-  gender: z.enum(["male", "female"]).optional(),
+  attachedWashroom: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
+
+  gender: z.enum(GENDER_PREFERENCES).optional(),
 
   availableImmediately: z
     .enum(["true", "false"])
@@ -134,6 +145,18 @@ export const FilterSchema = z.object({
       return value.split(",");
     })
     .pipe(z.array(HouseRuleTypeSchema)),
+
+  services: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return [];
+      }
+
+      return value.split(",");
+    })
+    .pipe(z.array(ServiceTypeSchema)),
 });
 
 export const GetListingsSchema = z.object({

@@ -68,40 +68,48 @@ export function buildSearchQuery(input: Filter) {
     gender,
     locality,
     bhk,
-    occupancy,
+    rentalType,
     furnishedStatus,
     rentMin,
     rentMax,
     floorMin,
     floorMax,
+    capacityMin,
+    capacityMax,
     totalOccupancyMin,
     totalOccupancyMax,
+    attachedWashroom,
     availableImmediately,
     availableAfter,
     addOns,
     amenities,
     houseRules,
+    services,
   } = input;
 
   const query: Record<string, unknown> = {};
 
-  query["data.status"] = "active";
+  query["status"] = "active";
 
   if (gender) {
-    query["data.gender"] = gender;
+    query["preferences.gender"] = gender;
   }
 
   if (locality) {
-    query["data.locality"] = {
+    query["property.locality"] = {
       $regex: `^${locality}$`,
       $options: "i",
     };
   }
 
+  if (attachedWashroom !== undefined) {
+    query["property.attached_washroom"] = attachedWashroom;
+  }
+
   const inFilters = {
-    "data.bhk": bhk,
-    "data.occupancy": occupancy,
-    "data.furnished_status": furnishedStatus,
+    "property.bhk": bhk,
+    "rental_scope.type": rentalType,
+    "property.furnished_status": furnishedStatus,
   };
 
   for (const [field, values] of Object.entries(inFilters)) {
@@ -111,9 +119,10 @@ export function buildSearchQuery(input: Filter) {
   }
 
   const rangeFilters = {
-    "data.rent": [rentMin, rentMax],
-    "data.floor": [floorMin, floorMax],
-    "data.total_occupancy": [totalOccupancyMin, totalOccupancyMax],
+    "pricing.rent": [rentMin, rentMax],
+    "property.floor": [floorMin, floorMax],
+    "rental_scope.capacity": [capacityMin, capacityMax],
+    "rental_scope.total_occupancy": [totalOccupancyMin, totalOccupancyMax],
   };
 
   for (const [field, [min, max]] of Object.entries(rangeFilters)) {
@@ -126,17 +135,18 @@ export function buildSearchQuery(input: Filter) {
   }
 
   if (availableImmediately !== undefined) {
-    query["data.available_immediately"] = availableImmediately;
+    query["availability.available_immediately"] = availableImmediately;
   }
 
   if (availableAfter !== undefined) {
-    query["data.available_from"] = { $gte: availableAfter };
+    query["availability.available_from"] = { $gte: availableAfter };
   }
 
   const allFilters = {
-    "data.add_ons.type": addOns,
-    "data.amenities.type": amenities,
-    "data.house_rules.type": houseRules,
+    "add_ons.type": addOns,
+    "amenities.type": amenities,
+    "house_rules.type": houseRules,
+    "services.type": services,
   };
 
   for (const [field, values] of Object.entries(allFilters)) {
@@ -170,7 +180,7 @@ export function buildSearchPipeline(
           type: "Point",
           coordinates: [longitude, latitude],
         },
-        key: "data.location",
+        key: "property.location",
         distanceField: "distance",
         maxDistance: LISTING_SEARCH_RADIUS_METERS,
         spherical: true,
@@ -182,10 +192,11 @@ export function buildSearchPipeline(
   if (totalInitCostMin !== undefined || totalInitCostMax !== undefined) {
     const totalInitCostExpression = {
       $add: [
-        "$data.rent",
-        { $ifNull: ["$data.deposit", 0] },
-        { $ifNull: ["$data.brokerage", 0] },
-        { $ifNull: ["$data.setup_cost", 0] },
+        "$pricing.rent",
+        { $ifNull: ["$pricing.deposit", 0] },
+        { $ifNull: ["$pricing.brokerage", 0] },
+        { $ifNull: ["$pricing.setup_cost", 0] },
+        { $ifNull: ["$pricing.move_in_charges", 0] },
       ],
     };
 

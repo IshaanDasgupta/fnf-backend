@@ -26,23 +26,25 @@ export async function getProfile(userId: string): Promise<ProfileResponse> {
     favorite_listings: user.favorite_listings.map((listing: any) => ({
       id: listing._id.toString(),
       coverImage:
-        listing.data.cover_image ||
-        listing.data.images?.[0] ||
-        DEFAULT_LISTING_IMAGE,
+        listing.cover_image || listing.images?.[0] || DEFAULT_LISTING_IMAGE,
       address: {
-        locality: listing.data.locality,
-        city: listing.data.city,
+        locality: listing.property.locality,
+        city: listing.property.city,
       },
-      rent: listing.data.rent,
-      bhk: listing.data.bhk,
-      occupancy: listing.data.occupancy,
-      totalOccupancy: listing.data.total_occupancy,
-      furnishedStatus: listing.data.furnished_status,
-      genderPreference: listing.data.gender_preference,
-      availableFrom: listing.data.available_from
-        ? new Date(listing.data.available_from).toISOString()
+      rent: listing.pricing.rent,
+      bhk: listing.property.bhk,
+      rentalScope: {
+        type: listing.rental_scope.type,
+        capacity: listing.rental_scope.capacity,
+        totalOccupancy: listing.rental_scope.total_occupancy,
+      },
+      furnishedStatus: listing.property.furnished_status,
+      genderPreference: listing.preferences?.gender ?? undefined,
+      availableFrom: listing.availability?.available_from
+        ? new Date(listing.availability.available_from).toISOString()
         : undefined,
-      availableImmediately: listing.data.available_immediately,
+      availableImmediately:
+        listing.availability?.available_immediately ?? false,
     })),
   };
 }
