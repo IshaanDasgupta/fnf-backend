@@ -15,7 +15,7 @@ import {
 export interface RentalScopeResponse {
   type: RentalScopeType;
   capacity: number;
-  totalOccupancy: number;
+  totalOccupancy?: number;
 }
 
 export interface ListingCardResponse {

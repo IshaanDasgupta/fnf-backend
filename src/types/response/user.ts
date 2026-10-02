@@ -32,7 +32,7 @@ export interface ProfileListingResponse {
   rentalScope: {
     type: RentalScopeType;
     capacity: number;
-    totalOccupancy: number;
+    totalOccupancy?: number;
   };
 
   furnishedStatus: FurnishedStatus;

@@ -36,7 +36,7 @@ export async function getProfile(userId: string): Promise<ProfileResponse> {
       rentalScope: {
         type: listing.rental_scope.type,
         capacity: listing.rental_scope.capacity,
-        totalOccupancy: listing.rental_scope.total_occupancy,
+        totalOccupancy: listing.rental_scope.total_occupancy ?? undefined,
       },
       furnishedStatus: listing.property.furnished_status,
       genderPreference: listing.preferences?.gender ?? undefined,

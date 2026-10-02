@@ -136,7 +136,7 @@ export async function getListings(
     rentalScope: {
       type: listing.rental_scope.type,
       capacity: listing.rental_scope.capacity,
-      totalOccupancy: listing.rental_scope.total_occupancy,
+      totalOccupancy: listing.rental_scope.total_occupancy ?? undefined,
     },
     furnishedStatus: listing.property.furnished_status,
     genderPreference: listing.preferences?.gender ?? undefined,
@@ -211,7 +211,7 @@ export async function searchListings(
     rentalScope: {
       type: listing.rental_scope.type,
       capacity: listing.rental_scope.capacity,
-      totalOccupancy: listing.rental_scope.total_occupancy,
+      totalOccupancy: listing.rental_scope.total_occupancy ?? undefined,
     },
     furnishedStatus: listing.property.furnished_status,
     genderPreference: listing.preferences?.gender ?? undefined,
@@ -298,7 +298,7 @@ export async function getMapListings(
     rentalScope: {
       type: listing.rental_scope.type,
       capacity: listing.rental_scope.capacity,
-      totalOccupancy: listing.rental_scope.total_occupancy,
+      totalOccupancy: listing.rental_scope.total_occupancy ?? undefined,
     },
     furnishedStatus: listing.property.furnished_status,
     genderPreference: listing.preferences?.gender ?? undefined,
@@ -446,7 +446,7 @@ export async function getListing(
       rentalScope: {
         type: rental_scope.type,
         capacity: rental_scope.capacity,
-        totalOccupancy: rental_scope.total_occupancy,
+        totalOccupancy: rental_scope.total_occupancy ?? undefined,
       },
 
       furnishedStatus: property.furnished_status,
