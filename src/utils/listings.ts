@@ -74,8 +74,7 @@ export function buildSearchQuery(input: Filter) {
     rentMax,
     floorMin,
     floorMax,
-    capacityMin,
-    capacityMax,
+    capacity,
     totalOccupancyMin,
     totalOccupancyMax,
     attachedWashroom,
@@ -121,7 +120,6 @@ export function buildSearchQuery(input: Filter) {
   const rangeFilters = {
     "pricing.rent": [rentMin, rentMax],
     "property.floor": [floorMin, floorMax],
-    "rental_scope.capacity": [capacityMin, capacityMax],
     "rental_scope.total_occupancy": [totalOccupancyMin, totalOccupancyMax],
   };
 
@@ -131,6 +129,28 @@ export function buildSearchQuery(input: Filter) {
         ...(min !== undefined && { $gte: min }),
         ...(max !== undefined && { $lte: max }),
       };
+    }
+  }
+
+  if (capacity.length > 0) {
+    const exact: number[] = [];
+    if (capacity.includes("1")) exact.push(1);
+    if (capacity.includes("2")) exact.push(2);
+    const has3Plus = capacity.includes("3plus");
+
+    if (has3Plus && exact.length === 0) {
+      query["rental_scope.capacity"] = { $gte: 3 };
+    } else if (has3Plus && exact.length > 0) {
+      if (exact.length === 2) {
+        // 1, 2 and 3+ selected covers every possible capacity (>= 1), no filter needed
+      } else {
+        query["$or"] = [
+          { "rental_scope.capacity": { $in: exact } },
+          { "rental_scope.capacity": { $gte: 3 } },
+        ];
+      }
+    } else {
+      query["rental_scope.capacity"] = { $in: exact };
     }
   }
 

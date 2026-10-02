@@ -62,6 +62,22 @@ export const QUICK_FILTERS: QuickFilter[] = [
       "property.bhk": "2 BHK",
     },
   },
+
+  {
+    id: "single-occupancy",
+    label: "Single Occupancy",
+    query: {
+      "rental_scope.capacity": 1,
+    },
+  },
+
+  {
+    id: "wifi",
+    label: "Wi-Fi Included",
+    query: {
+      "add_ons.type": { $in: ["WiFi", "Fiber Internet"] },
+    },
+  },
 ];
 
 export const QUICK_FILTER_IDS = QUICK_FILTERS.map((filter) => filter.id) as [

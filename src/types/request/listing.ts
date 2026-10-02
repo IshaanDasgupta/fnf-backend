@@ -90,8 +90,30 @@ export const FilterSchema = z.object({
   floorMin: z.coerce.number().finite().nonnegative().optional(),
   floorMax: z.coerce.number().finite().nonnegative().optional(),
 
-  capacityMin: z.coerce.number().int().positive().optional(),
-  capacityMax: z.coerce.number().int().positive().optional(),
+  capacity: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return [];
+      }
+
+      return value.split(",").map((item) => {
+        const normalized = item.trim().toLowerCase();
+
+        if (
+          normalized === "3plus" ||
+          normalized === "3+" ||
+          normalized === "3 plus" ||
+          normalized === "3"
+        ) {
+          return "3plus";
+        }
+
+        return normalized;
+      });
+    })
+    .pipe(z.array(z.enum(["1", "2", "3plus"]))),
 
   totalOccupancyMin: z.coerce.number().int().positive().optional(),
   totalOccupancyMax: z.coerce.number().int().positive().optional(),

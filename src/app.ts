@@ -35,6 +35,11 @@ app.get("/privacy", (_req, res) => {
 
 app.use(jwtMiddleware);
 
+app.use((req, _res, next) => {
+  console.log("AFTER JWT:", req.method, req.originalUrl);
+  next();
+});
+
 app.use("/auth", authRoutes);
 app.use("/user", userRoutes);
 app.use("/listing", listingRoutes);
